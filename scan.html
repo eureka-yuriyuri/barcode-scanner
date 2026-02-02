@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Android 條碼掃描</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+  body { font-family: system-ui, sans-serif; padding: 16px; }
+  button { padding: 10px 14px; margin: 4px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  th, td { border-bottom: 1px solid #ccc; padding: 6px; font-size: 14px; }
+</style>
+</head>
+
+<body>
+<h2>📱 Android 相機條碼掃描</h2>
+
+<div id="reader" style="width:100%"></div>
+
+<button onclick="startScan()">▶ 開始掃描</button>
+<button onclick="stopScan()">⏹ 停止掃描</button>
+<button onclick="exportCSV()">⬇ 匯出 CSV</button>
+
+<table>
+  <thead>
+    <tr>
+      <th>Barcode</th>
+      <th>掃描時間</th>
+    </tr>
+  </thead>
+  <tbody id="log"></tbody>
+</table>
+
+<script>
+let scanner;
+let records = [];
+let lastScan = {};
+const COOLDOWN = 1500; // ms
+
+function now() {
+  const d = new Date();
+  return d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0') + ' ' +
+    String(d.getHours()).padStart(2,'0') + ':' +
+    String(d.getMinutes()).padStart(2,'0') + ':' +
+    String(d.getSeconds()).padStart(2,'0');
+}
+
+function startScan() {
+  scanner = new Html5Qrcode("reader");
+  scanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    (text) => {
+      const t = Date.now();
+      if (lastScan[text] && t - lastScan[text] < COOLDOWN) return;
+      lastScan[text] = t;
+
+      const time = now();
+      records.push({ barcode: text, time });
+
+      const row = `<tr><td>${text}</td><td>${time}</td></tr>`;
+      document.getElementById("log").insertAdjacentHTML("afterbegin", row);
+    }
+  );
+}
+
+function stopScan() {
+  if (scanner) scanner.stop();
+}
+
+function exportCSV() {
+  if (records.length === 0) {
+    alert("沒有資料");
+    return;
+  }
+
+  let csv = "\uFEFFbarcode,scanned_at\n";
+  records.forEach(r => {
+    csv += `"${r.barcode}","${r.time}"\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "barcode_scans.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
