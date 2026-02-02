@@ -5,189 +5,184 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Barcode Scanner</title>
 
-  <!-- html5-qrcode -->
+  <!-- Scanner -->
   <script src="https://unpkg.com/html5-qrcode"></script>
 
-  <!-- Material 3 (Material Web) -->
+  <!-- Material 3 -->
   <script type="module">
     import '@material/web/button/filled-button.js';
     import '@material/web/button/outlined-button.js';
+    import '@material/web/snackbar/snackbar.js';
     import '@material/web/icon/icon.js';
     import '@material/web/iconbutton/icon-button.js';
-    import '@material/web/snackbar/snackbar.js';
-    import '@material/web/progress/circular-progress.js';
+    import '@material/web/dialog/dialog.js';
   </script>
 
-  <!-- Material Symbols (icons) -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1" />
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
 
   <style>
-    :root {
-      color-scheme: light;
-      --app-max: 720px;
+    :root{
+      --max: 760px;
       --pad: 16px;
-      --bar-h: 86px; /* 底部操作列高度（含安全區） */
+      --barPad: 12px;
+      --barGap: 10px;
+      --barBtnH: 52px;
+      --radius: 14px;
     }
 
-    body {
-      margin: 0;
+    body{
+      margin:0;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
-      background: #fff;
-      color: #111;
+      background:#fff;
+      color:#111;
     }
 
-    .wrap {
-      max-width: var(--app-max);
+    .wrap{
+      max-width: var(--max);
       margin: 0 auto;
       padding: 14px var(--pad);
-      padding-bottom: calc(var(--bar-h) + env(safe-area-inset-bottom, 0px));
+      padding-bottom: calc( (var(--barBtnH) * 3) + (var(--barGap) * 2) + (var(--barPad) * 2) + env(safe-area-inset-bottom, 0px) );
       box-sizing: border-box;
     }
 
-    header {
-      display: flex;
-      align-items: baseline;
+    header{
+      display:flex;
       justify-content: space-between;
+      align-items: baseline;
       gap: 12px;
       margin: 6px 0 12px;
     }
-
-    h2 {
-      font-size: 20px;
-      margin: 0;
-      font-weight: 700;
-      letter-spacing: 0.2px;
+    h2{
+      margin:0;
+      font-size:20px;
+      font-weight: 750;
     }
-
-    .hint {
-      font-size: 12px;
-      color: #666;
+    .sub{
+      font-size:12px;
+      color:#666;
+      margin-top:4px;
+      line-height: 1.3;
     }
-
-    /* Reader (camera) */
-    .reader-card {
-      border: 1px solid #e6e6e6;
-      border-radius: 18px;
-      overflow: hidden;
-      background: #000;
-      position: relative;
-    }
-
-    #reader {
-      width: 100%;
-    }
-
-    .status {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 12px 2px 10px;
-      color: #444;
-      font-size: 13px;
-    }
-
-    .status .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: #bbb;
-    }
-    .status.running .dot { background: #1aab5b; }
-    .status.stopped .dot { background: #bbb; }
-
-    /* Records list */
-    .list {
-      margin-top: 12px;
-      border: 1px solid #eee;
-      border-radius: 18px;
-      overflow: hidden;
-      background: #fff;
-    }
-
-    .list-head {
-      padding: 12px 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #fafafa;
-      border-bottom: 1px solid #eee;
-    }
-
-    .list-head .title {
-      font-size: 14px;
-      font-weight: 650;
-    }
-
-    .list-head .meta {
-      font-size: 12px;
-      color: #666;
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: 1fr auto auto; /* barcode | time | delete */
-      gap: 10px;
-      padding: 12px 14px;
-      align-items: center;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    .row:last-child { border-bottom: 0; }
-
-    .barcode {
-      font-size: 14px;
-      font-weight: 600;
-      word-break: break-all;
-    }
-
-    .time {
-      font-size: 12px;
-      color: #666;
+    .clock{
+      font-size:12px;
+      color:#666;
       white-space: nowrap;
     }
 
-    .empty {
-      padding: 18px 14px;
-      color: #777;
-      font-size: 13px;
+    .card{
+      border: 1px solid #e9e9e9;
+      border-radius: 18px;
+      overflow:hidden;
+      background:#000;
+    }
+    #reader{ width:100%; }
+
+    .status{
+      margin: 12px 2px 10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:13px;
+      color:#444;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:999px;background:#bbb;
+    }
+    .status.running .dot{ background:#1aab5b; }
+    .status.stopped .dot{ background:#bbb; }
+
+    .list{
+      margin-top: 12px;
+      border:1px solid #eee;
+      border-radius: 18px;
+      overflow:hidden;
+    }
+    .listHead{
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+      padding: 12px 14px;
+      background:#fafafa;
+      border-bottom:1px solid #eee;
+      gap: 10px;
+    }
+    .listHead .title{
+      font-size:14px;
+      font-weight: 700;
+    }
+    .listHead .meta{
+      font-size:12px;
+      color:#666;
+      display:flex;
+      align-items:center;
+      gap:8px;
     }
 
-    /* Bottom action bar */
-    .bottom-bar {
+    .row{
+      display:grid;
+      grid-template-columns: 1fr auto auto; /* barcode | time | delete */
+      gap: 10px;
+      align-items:center;
+      padding: 12px 14px;
+      border-bottom:1px solid #f0f0f0;
+    }
+    .row:last-child{ border-bottom:0; }
+
+    .barcode{
+      font-size:14px;
+      font-weight:650;
+      word-break: break-all;
+    }
+    .time{
+      font-size:12px;
+      color:#666;
+      white-space: nowrap;
+    }
+
+    .empty{
+      padding: 18px 14px;
+      font-size:13px;
+      color:#777;
+    }
+
+    /* Bottom bar: 3 full-width rectangular buttons (App-like) */
+    .bottomBar{
       position: fixed;
-      left: 0; right: 0; bottom: 0;
-      background: rgba(255, 255, 255, 0.92);
+      left:0; right:0; bottom:0;
+      background: rgba(255,255,255,.94);
       backdrop-filter: blur(10px);
       border-top: 1px solid #eaeaea;
-      padding: 10px var(--pad);
-      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-      box-sizing: border-box;
+      padding: var(--barPad) var(--pad);
+      padding-bottom: calc(var(--barPad) + env(safe-area-inset-bottom, 0px));
+      box-sizing:border-box;
       z-index: 999;
     }
-
-    .bottom-inner {
-      max-width: var(--app-max);
+    .bottomInner{
+      max-width: var(--max);
       margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-      align-items: center;
+      display:flex;
+      flex-direction: column;
+      gap: var(--barGap);
     }
 
-    md-filled-button, md-outlined-button {
-      width: 100%;
-      height: 44px;
+    md-filled-button, md-outlined-button{
+      width:100%;
+      height: var(--barBtnH);
+      border-radius: var(--radius);
+      --md-filled-button-container-shape: var(--radius);
+      --md-outlined-button-container-shape: var(--radius);
+      letter-spacing: .2px;
+    }
+
+    /* small utilities */
+    .pill{
+      border: 1px solid #eee;
+      background:#fff;
       border-radius: 999px;
-      --md-filled-button-container-shape: 999px;
-      --md-outlined-button-container-shape: 999px;
-    }
-
-    /* Small helper */
-    .sr-only {
-      position: absolute;
-      width: 1px; height: 1px;
-      padding: 0; margin: -1px;
-      overflow: hidden; clip: rect(0,0,0,0);
-      border: 0;
+      padding: 6px 10px;
+      font-size: 12px;
+      color:#444;
     }
   </style>
 </head>
@@ -197,56 +192,55 @@
     <header>
       <div>
         <h2>條碼掃描</h2>
-        <div class="hint">提示：請用 HTTPS 開啟（GitHub Pages OK）</div>
+        <div class="sub">
+          目標：輸出「跟條碼印的一樣」的數字（含 UPC/EAN 常見正規化）<br/>
+          歷史清單：會自動保存（重開頁面也還在）
+        </div>
       </div>
-      <div class="hint" id="clock"></div>
+      <div class="clock" id="clock"></div>
     </header>
 
-    <div class="reader-card">
+    <div class="card">
       <div id="reader"></div>
     </div>
 
-    <div id="status" class="status stopped" aria-live="polite">
+    <div class="status stopped" id="status">
       <span class="dot" aria-hidden="true"></span>
       <span id="statusText">未啟動掃描</span>
-      <span id="spinner" style="display:none;">
-        <md-circular-progress indeterminate></md-circular-progress>
-      </span>
+      <span class="pill" id="modePill">Printed 模式</span>
     </div>
 
-    <section class="list" aria-label="掃描紀錄">
-      <div class="list-head">
-        <div class="title">掃描紀錄</div>
-        <div class="meta"><span id="count">0</span> 筆</div>
+    <section class="list">
+      <div class="listHead">
+        <div class="title">歷史清單</div>
+        <div class="meta">
+          <span><span id="count">0</span> 筆</span>
+          <md-outlined-button id="btnClear" style="height:34px;border-radius:999px;--md-outlined-button-container-shape:999px;">
+            清空
+          </md-outlined-button>
+        </div>
       </div>
-
       <div id="records">
-        <div class="empty" id="empty">尚無資料，點底部「開始」後掃描條碼。</div>
+        <div class="empty" id="empty">尚無資料。點底部「開始掃描」後對準條碼。</div>
       </div>
     </section>
   </div>
 
   <!-- Bottom action bar -->
-  <div class="bottom-bar" role="toolbar" aria-label="操作">
-    <div class="bottom-inner">
+  <div class="bottomBar" role="toolbar" aria-label="操作">
+    <div class="bottomInner">
       <md-filled-button id="btnStart">
-        <md-icon slot="icon">
-          <span class="material-symbols-outlined">videocam</span>
-        </md-icon>
-        開始
+        <md-icon slot="icon"><span class="material-symbols-outlined">videocam</span></md-icon>
+        開始掃描
       </md-filled-button>
 
       <md-outlined-button id="btnStop">
-        <md-icon slot="icon">
-          <span class="material-symbols-outlined">stop_circle</span>
-        </md-icon>
-        停止
+        <md-icon slot="icon"><span class="material-symbols-outlined">stop_circle</span></md-icon>
+        停止掃描
       </md-outlined-button>
 
       <md-filled-button id="btnExport">
-        <md-icon slot="icon">
-          <span class="material-symbols-outlined">download</span>
-        </md-icon>
+        <md-icon slot="icon"><span class="material-symbols-outlined">download</span></md-icon>
         匯出 CSV
       </md-filled-button>
     </div>
@@ -254,59 +248,89 @@
 
   <md-snackbar id="snackbar"></md-snackbar>
 
-  <script>
-    // ===== Settings =====
-    const COOLDOWN = 1500; // 同碼冷卻（ms）
+  <md-dialog id="confirmClear">
+    <div slot="headline">清空歷史清單？</div>
+    <div slot="content">這會刪除目前儲存在此手機瀏覽器的所有掃描紀錄。</div>
+    <div slot="actions">
+      <md-outlined-button id="btnCancelClear">取消</md-outlined-button>
+      <md-filled-button id="btnDoClear">確定清空</md-filled-button>
+    </div>
+  </md-dialog>
 
-    // ===== State =====
+  <script>
+    // ========= Config =========
+    // 同碼短時間重複掃到的冷卻時間（仍保留：避免鏡頭一直觸發）
+    const COOLDOWN_MS = 1500;
+
+    // localStorage key（歷史清單）
+    const STORE_KEY = "barcode_scanner_history_v1";
+
+    // ========= State =========
     let scanner = null;
     let isRunning = false;
 
-    /** records: [{id, barcode, time}] */
+    // records: [{id, barcode, time, format}]
     let records = [];
     let lastScanAt = {}; // barcode -> epoch(ms)
 
-    // ===== UI helpers =====
+    // ========= DOM =========
     const $ = (id) => document.getElementById(id);
 
-    function showToast(text) {
+    function toast(msg){
       const sb = $("snackbar");
-      sb.labelText = text;
+      sb.labelText = msg;
       sb.open = true;
     }
 
-    function nowString() {
+    function nowString(){
       const d = new Date();
       const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      const hh = String(d.getHours()).padStart(2, '0');
-      const mi = String(d.getMinutes()).padStart(2, '0');
-      const ss = String(d.getSeconds()).padStart(2, '0');
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      const hh = String(d.getHours()).padStart(2,"0");
+      const mi = String(d.getMinutes()).padStart(2,"0");
+      const ss = String(d.getSeconds()).padStart(2,"0");
       return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
     }
 
-    function setStatus(running, text) {
-      const el = $("status");
-      const t = $("statusText");
-      const sp = $("spinner");
+    function setStatus(running, text){
       isRunning = running;
-
-      el.classList.toggle("running", running);
-      el.classList.toggle("stopped", !running);
-      t.textContent = text;
-      sp.style.display = running ? "inline-flex" : "none";
+      $("status").classList.toggle("running", running);
+      $("status").classList.toggle("stopped", !running);
+      $("statusText").textContent = text;
 
       $("btnStart").disabled = running;
       $("btnStop").disabled = !running;
     }
 
-    function renderCount() {
+    function saveHistory(){
+      try{
+        localStorage.setItem(STORE_KEY, JSON.stringify(records));
+      }catch(e){
+        // 可能是 storage 滿了或被禁用
+        console.warn(e);
+      }
+    }
+
+    function loadHistory(){
+      try{
+        const raw = localStorage.getItem(STORE_KEY);
+        if(!raw) return [];
+        const arr = JSON.parse(raw);
+        if(!Array.isArray(arr)) return [];
+        return arr;
+      }catch(e){
+        console.warn(e);
+        return [];
+      }
+    }
+
+    function renderCount(){
       $("count").textContent = String(records.length);
       $("empty").style.display = records.length === 0 ? "block" : "none";
     }
 
-    function renderRecordRow(item) {
+    function renderRow(item){
       const row = document.createElement("div");
       row.className = "row";
       row.dataset.id = item.id;
@@ -331,104 +355,151 @@
       return row;
     }
 
-    function addRecord(barcodeText) {
-      const t = Date.now();
-      if (lastScanAt[barcodeText] && (t - lastScanAt[barcodeText]) < COOLDOWN) return;
-      lastScanAt[barcodeText] = t;
+    function rerenderAll(){
+      const container = $("records");
+      container.innerHTML = "";
+      if(records.length === 0){
+        container.appendChild($("empty"));
+      }else{
+        // newest first
+        for(const r of records){
+          container.appendChild(renderRow(r));
+        }
+      }
+      renderCount();
+    }
+
+    function deleteRecord(id){
+      const idx = records.findIndex(r => r.id === id);
+      if(idx === -1) return;
+
+      records.splice(idx, 1);
+      const el = $("records").querySelector(`[data-id="${CSS.escape(id)}"]`);
+      if(el) el.remove();
+
+      renderCount();
+      saveHistory();
+      toast("已刪除 1 筆");
+    }
+
+    // ========= “Printed” normalization =========
+    // 目的：盡量讓數字接近「條碼印的數字」
+    function normalizeToPrinted(decodedText, formatName){
+      if(!decodedText) return "";
+
+      // 常見情況：解碼結果含空白/破折號，先清掉
+      let t = String(decodedText).trim().replace(/[\s-]/g, "");
+
+      // 如果是純數字（商品 UPC/EAN 多半是純數字）
+      const isDigits = /^[0-9]+$/.test(t);
+      if(!isDigits) return t; // 含字母的條碼（Code128 等）不亂動，避免更不精確
+
+      // html5-qrcode 有時把 UPC-A 當 EAN-13 回傳（前面補 0）
+      // 你要「看起來跟印的一樣」時，通常希望 UPC-A 顯示 12 碼
+      if(formatName === "EAN_13" && t.length === 13 && t.startsWith("0")){
+        // 0 + 12 digits -> show as 12 digits (UPC-A style)
+        return t.slice(1);
+      }
+
+      // 其他：就維持原樣（EAN-13 13 碼、EAN-8 8 碼…）
+      return t;
+    }
+
+    function addRecord(rawText, formatName){
+      const printed = normalizeToPrinted(rawText, formatName);
+
+      if(!printed) return;
+
+      const now = Date.now();
+      if(lastScanAt[printed] && (now - lastScanAt[printed] < COOLDOWN_MS)) return;
+      lastScanAt[printed] = now;
 
       const item = {
-        id: crypto.randomUUID ? crypto.randomUUID() : String(t) + Math.random().toString(16).slice(2),
-        barcode: barcodeText,
-        time: nowString()
+        id: (crypto.randomUUID ? crypto.randomUUID() : String(now) + Math.random().toString(16).slice(2)),
+        barcode: printed,
+        time: nowString(),
+        format: formatName || ""
       };
+
+      // newest first
       records.unshift(item);
 
       const container = $("records");
-      container.insertBefore(renderRecordRow(item), container.firstChild);
+      if(records.length === 1){
+        // remove empty message if first record
+        // (empty element still exists in DOM; we just hide it)
+        $("empty").style.display = "none";
+      }
+      container.insertBefore(renderRow(item), container.firstChild);
 
       renderCount();
+      saveHistory();
     }
 
-    function deleteRecord(id) {
-      const idx = records.findIndex(r => r.id === id);
-      if (idx === -1) return;
-
-      records.splice(idx, 1);
-
-      const row = $("records").querySelector(`[data-id="${CSS.escape(id)}"]`);
-      if (row) row.remove();
-
-      renderCount();
-      showToast("已刪除 1 筆紀錄");
-    }
-
-    // ===== Scanner controls =====
-    async function startScan() {
-      if (scanner || isRunning) return;
+    // ========= Scanner =========
+    async function startScan(){
+      if(isRunning || scanner) return;
 
       setStatus(true, "啟動相機中…");
 
-      try {
+      try{
         scanner = new Html5Qrcode("reader");
 
         await scanner.start(
           { facingMode: "environment" },
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-            // 讓手機體驗更穩：可選擇禁用翻轉等行為（不同版本支援度不同）
-            disableFlip: true
-          },
-          (decodedText) => {
-            // 掃描成功 callback
-            const text = (decodedText || "").trim();
-            if (!text) return;
-            addRecord(text);
+          { fps: 10, qrbox: { width: 250, height: 250 }, disableFlip: true },
+          // success callback: (decodedText, decodedResult)
+          (decodedText, decodedResult) => {
+            const formatName =
+              decodedResult && decodedResult.result && decodedResult.result.format
+                ? decodedResult.result.format.formatName
+                : "";
+            addRecord(decodedText, formatName);
           }
         );
 
         setStatus(true, "掃描中（對準條碼即可）");
-        showToast("相機已啟動");
-      } catch (err) {
-        console.error(err);
-        setStatus(false, "啟動失敗（請確認 HTTPS 與相機權限）");
-        showToast("啟動失敗：請確認 HTTPS / 相機權限");
+        toast("相機已啟動");
+      }catch(e){
+        console.error(e);
         scanner = null;
+        setStatus(false, "啟動失敗（請確認 HTTPS / 相機權限）");
+        toast("啟動失敗：請確認 HTTPS / 相機權限");
       }
     }
 
-    async function stopScan() {
-      if (!scanner) {
+    async function stopScan(){
+      if(!scanner){
         setStatus(false, "未啟動掃描");
         return;
       }
-      try {
+      try{
         await scanner.stop();
         await scanner.clear();
-      } catch (err) {
-        console.error(err);
-      } finally {
+      }catch(e){
+        console.error(e);
+      }finally{
         scanner = null;
         setStatus(false, "已停止");
-        showToast("已停止掃描");
+        toast("已停止");
       }
     }
 
-    function exportCSV() {
-      if (records.length === 0) {
-        showToast("沒有資料可匯出");
+    function exportCSV(){
+      if(records.length === 0){
+        toast("沒有資料可匯出");
         return;
       }
 
-      // UTF-8 BOM for Excel
+      // Excel-friendly UTF-8 BOM
       let csv = "\uFEFFbarcode,scanned_at\n";
-      for (const r of records.slice().reverse()) {
-        // reverse: 讓 CSV 由舊到新（看你需求；想要新到舊就移除 reverse）
-        const b = String(r.barcode).replaceAll('"', '""');
+      // 匯出用「由舊到新」：reverse 一下（看你要不要）
+      for(const r of records.slice().reverse()){
+        const b = String(r.barcode).replaceAll('"','""');
         csv += `"${b}","${r.time}"\n`;
       }
 
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -436,27 +507,47 @@
       a.click();
       URL.revokeObjectURL(url);
 
-      showToast("CSV 已下載");
+      toast("CSV 已下載");
     }
 
-    // ===== Wire up buttons =====
+    // ========= Clear history =========
+    function openClearDialog(){
+      $("confirmClear").open = true;
+    }
+    function closeClearDialog(){
+      $("confirmClear").open = false;
+    }
+    function doClear(){
+      records = [];
+      lastScanAt = {};
+      saveHistory();
+      rerenderAll();
+      closeClearDialog();
+      toast("已清空");
+    }
+
+    // ========= Wire =========
     $("btnStart").addEventListener("click", startScan);
     $("btnStop").addEventListener("click", stopScan);
     $("btnExport").addEventListener("click", exportCSV);
 
-    // ===== Clock (optional) =====
-    function tick() { $("clock").textContent = nowString(); }
-    tick();
-    setInterval(tick, 1000);
+    $("btnClear").addEventListener("click", openClearDialog);
+    $("btnCancelClear").addEventListener("click", closeClearDialog);
+    $("btnDoClear").addEventListener("click", doClear);
 
-    // Initial UI state
-    setStatus(false, "未啟動掃描");
-    renderCount();
+    // clock
+    function tick(){ $("clock").textContent = nowString(); }
+    tick(); setInterval(tick, 1000);
 
-    // Stop camera if page hidden (mobile)
+    // stop camera when hidden (mobile UX)
     document.addEventListener("visibilitychange", () => {
-      if (document.hidden) stopScan();
+      if(document.hidden) stopScan();
     });
+
+    // ========= Init from history =========
+    records = loadHistory();
+    rerenderAll();
+    setStatus(false, "未啟動掃描");
   </script>
 </body>
 </html>
