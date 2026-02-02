@@ -50,7 +50,7 @@
       max-width: var(--max);
       margin: 0 auto;
       padding: 14px var(--pad);
-      /* reserve space for bottom bar */
+      /* reserve space for bottom bar (3 stacked buttons) */
       padding-bottom: calc(
         (var(--btn-h) * 3) + (var(--bar-gap) * 2) + (var(--bar-pad) * 2)
         + env(safe-area-inset-bottom, 0px)
@@ -86,7 +86,7 @@
       padding-bottom: 4px;
     }
 
-    /* Camera card */
+    /* Cards / grouped list */
     .card{
       background: var(--card);
       border-radius: var(--radius);
@@ -94,6 +94,8 @@
       box-shadow: var(--shadow);
       border: 1px solid var(--line);
     }
+
+    /* Camera */
     .camera{
       background:#000;
     }
@@ -114,7 +116,7 @@
     }
     .status.running .dot{ background: #34C759; }
 
-    /* Grouped list */
+    /* Grouped */
     .group{
       margin-top: 14px;
     }
@@ -141,7 +143,9 @@
       padding: 12px 14px;
       border-bottom: 1px solid var(--line);
       background: rgba(242,242,247,.55);
+      gap: 12px;
     }
+
     .count{
       font-size: 12px;
       color: var(--sub);
@@ -157,8 +161,10 @@
       border: 1px solid var(--line);
       background: #fff;
       color: var(--ios-blue);
-      font-weight: 700;
+      font-weight: 800;
       font-size: 12px;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
     .smallBtn:active{
       transform: scale(.98);
@@ -177,13 +183,23 @@
 
     .barcode{
       font-size: 15px;
-      font-weight: 700;
+      font-weight: 800;
       word-break: break-all;
     }
     .time{
       font-size: 12px;
       color: var(--sub);
       white-space: nowrap;
+    }
+
+    .badge{
+      font-size: 11px;
+      font-weight: 800;
+      color: #fff;
+      background: rgba(52,199,89,.95);
+      padding: 4px 8px;
+      border-radius: 999px;
+      justify-self: end;
     }
 
     .iconBtn{
@@ -210,6 +226,11 @@
       font-size: 13px;
       color: var(--sub);
     }
+
+    /* Latest 3: tighter, more "info" */
+    #latestList { box-shadow: none; }
+    #latest .row { padding: 10px 14px; }
+    #latest .barcode { font-size: 14px; }
 
     /* Bottom bar: iOS-like */
     .bottomBar{
@@ -238,9 +259,8 @@
       border-radius: 14px;
       border: 0;
       font-size: 16px;
-      font-weight: 800;
+      font-weight: 900;
       letter-spacing: .2px;
-      color: #fff;
       box-shadow: var(--shadow);
       transition: transform .06s ease, background .06s ease, box-shadow .06s ease, opacity .06s ease;
       -webkit-tap-highlight-color: transparent;
@@ -250,8 +270,12 @@
       opacity: .45;
       box-shadow: none;
     }
-    .btnPrimary{ background: var(--ios-blue); }
-    .btnPrimary:active{ background: var(--ios-blue-press); transform: scale(.985); box-shadow: var(--shadow-press); }
+    .btnPrimary{ background: var(--ios-blue); color:#fff; }
+    .btnPrimary:active{
+      background: var(--ios-blue-press);
+      transform: scale(.985);
+      box-shadow: var(--shadow-press);
+    }
 
     .btnSecondary{
       background: var(--ios-gray);
@@ -259,19 +283,20 @@
       box-shadow: none;
       border: 1px solid var(--line);
     }
-    .btnSecondary:active{ background: var(--ios-gray-press); transform: scale(.985); }
-
-    .btnDanger{
-      background: var(--danger);
+    .btnSecondary:active{
+      background: var(--ios-gray-press);
+      transform: scale(.985);
     }
-    .btnDanger:active{ background: var(--danger-press); transform: scale(.985); box-shadow: var(--shadow-press); }
 
-    /* Toast */
+    /* Toast: show above bottom bar */
     .toast{
       position: fixed;
       left: 50%;
       transform: translateX(-50%);
-      bottom: calc( (var(--btn-h) * 3) + (var(--bar-gap) * 2) + (var(--bar-pad) * 2) + env(safe-area-inset-bottom, 0px) + 10px);
+      bottom: calc(
+        (var(--btn-h) * 3) + (var(--bar-gap) * 2) + (var(--bar-pad) * 2)
+        + env(safe-area-inset-bottom, 0px) + 10px
+      );
       background: rgba(0,0,0,.78);
       color:#fff;
       padding: 10px 12px;
@@ -301,15 +326,27 @@
       <div class="clock" id="clock"></div>
     </header>
 
+    <!-- Camera -->
     <div class="card camera">
       <div id="reader"></div>
     </div>
 
+    <!-- Latest 3 under camera (always visible) -->
+    <div class="group">
+      <div class="groupTitle">最新掃描（3 筆）</div>
+      <div class="list" id="latestList">
+        <div class="empty" id="latestEmpty">尚無資料</div>
+        <div id="latest"></div>
+      </div>
+    </div>
+
+    <!-- Status -->
     <div class="status stopped" id="status">
       <span class="dot" aria-hidden="true"></span>
       <span id="statusText">未啟動</span>
     </div>
 
+    <!-- History -->
     <div class="group">
       <div class="groupTitle">歷史清單</div>
       <div class="list">
@@ -317,7 +354,7 @@
           <div class="count">
             <span><span id="count">0</span> 筆</span>
           </div>
-          <button class="smallBtn" id="btnClear">清空</button>
+          <button class="smallBtn" id="btnClear" type="button">清空</button>
         </div>
         <div id="records">
           <div class="empty" id="empty">尚無資料。請點底部「開始掃描」。</div>
@@ -326,26 +363,29 @@
     </div>
   </div>
 
+  <!-- Bottom action bar -->
   <div class="bottomBar">
     <div class="bottomInner">
-      <button class="btn btnPrimary" id="btnStart">開始掃描</button>
-      <button class="btn btnSecondary" id="btnStop" disabled>停止掃描</button>
-      <button class="btn btnPrimary" id="btnExport">匯出 CSV</button>
+      <button class="btn btnPrimary" id="btnStart" type="button">開始掃描</button>
+      <button class="btn btnSecondary" id="btnStop" type="button" disabled>停止掃描</button>
+      <button class="btn btnPrimary" id="btnExport" type="button">匯出 CSV</button>
     </div>
   </div>
 
+  <!-- Toast -->
   <div class="toast" id="toast"></div>
 
   <script>
     // ========= Config =========
-    const COOLDOWN_MS = 1500; // 同碼短時間避免連續重複
-    const STORE_KEY = "barcode_scanner_history_v2_ios";
+    const COOLDOWN_MS = 1500;                 // 同碼短時間避免連續重複
+    const STORE_KEY = "barcode_scanner_history_v3_ios_latest"; // localStorage key
+    const LATEST_N = 3;                       // latest preview size
 
     // ========= State =========
     let scanner = null;
     let isRunning = false;
-    let records = []; // newest first: [{id, barcode, time, format}]
-    let lastScanAt = {}; // barcode -> epoch
+    let records = [];     // newest first: [{id, barcode, time, format}]
+    let lastScanAt = {};  // barcode -> epoch(ms)
 
     // ========= DOM =========
     const $ = (id) => document.getElementById(id);
@@ -368,7 +408,7 @@
       el.textContent = msg;
       el.classList.add("show");
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => el.classList.remove("show"), 1300);
+      toastTimer = setTimeout(() => el.classList.remove("show"), 1200);
     }
 
     function setStatus(running, text){
@@ -399,7 +439,8 @@
       $("empty").style.display = records.length === 0 ? "block" : "none";
     }
 
-    function rowEl(item){
+    // Row for history list (includes delete)
+    function historyRowEl(item){
       const row = document.createElement("div");
       row.className = "row";
       row.dataset.id = item.id;
@@ -422,29 +463,70 @@
       row.appendChild(barcode);
       row.appendChild(time);
       row.appendChild(del);
+
       return row;
     }
 
-    function addToUI(item){
+    function addToHistoryUI(item){
       const container = $("records");
-      container.insertBefore(rowEl(item), container.firstChild);
+      container.insertBefore(historyRowEl(item), container.firstChild);
       renderCount();
     }
 
-    function rerenderAll(){
+    function rerenderHistory(){
       const container = $("records");
       container.innerHTML = "";
       if(records.length === 0){
         container.appendChild($("empty"));
       }else{
-        for(const r of records) container.appendChild(rowEl(r));
+        for(const r of records){
+          container.appendChild(historyRowEl(r));
+        }
       }
       renderCount();
+    }
+
+    // Latest 3 preview under camera (no delete; focus on quick confirmation)
+    function updateLatest(){
+      const latestBox = $("latest");
+      const latestEmpty = $("latestEmpty");
+      latestBox.innerHTML = "";
+
+      const top = records.slice(0, LATEST_N);
+      if(top.length === 0){
+        latestEmpty.style.display = "block";
+        return;
+      }
+      latestEmpty.style.display = "none";
+
+      top.forEach((r, idx) => {
+        const row = document.createElement("div");
+        row.className = "row";
+
+        const barcode = document.createElement("div");
+        barcode.className = "barcode";
+        barcode.textContent = r.barcode;
+
+        const time = document.createElement("div");
+        time.className = "time";
+        time.textContent = r.time;
+
+        const badge = document.createElement("div");
+        badge.className = "badge";
+        badge.textContent = (idx === 0) ? "NEW" : "";
+
+        row.appendChild(barcode);
+        row.appendChild(time);
+        row.appendChild(badge);
+
+        latestBox.appendChild(row);
+      });
     }
 
     function deleteRecord(id){
       const idx = records.findIndex(r => r.id === id);
       if(idx === -1) return;
+
       records.splice(idx, 1);
 
       const el = $("records").querySelector(`[data-id="${CSS.escape(id)}"]`);
@@ -452,6 +534,7 @@
 
       saveHistory();
       renderCount();
+      updateLatest();
       toast("已刪除 1 筆");
     }
 
@@ -468,6 +551,7 @@
       if(formatName === "EAN_13" && t.length === 13 && t.startsWith("0")){
         return t.slice(1); // 變成 12 碼，更接近 UPC 印刷
       }
+
       return t; // 其他維持原樣
     }
 
@@ -488,12 +572,22 @@
 
       records.unshift(item);
       saveHistory();
-      addToUI(item);
+
+      // UI updates
+      addToHistoryUI(item);
+      updateLatest();
+
+      // Feedback
+      toast(`✅ 已掃描：${item.barcode}`);
+
+      // Optional haptic (Android works; iOS web may ignore)
+      if (navigator.vibrate) navigator.vibrate(20);
     }
 
     // ========= Scanner =========
     async function startScan(){
       if(isRunning || scanner) return;
+
       setStatus(true, "啟動中…");
 
       try{
@@ -509,6 +603,7 @@
             addRecord(decodedText, formatName);
           }
         );
+
         setStatus(true, "掃描中");
         toast("相機已啟動");
       }catch(e){
@@ -561,7 +656,8 @@
       records = [];
       lastScanAt = {};
       saveHistory();
-      rerenderAll();
+      rerenderHistory();
+      updateLatest();
       toast("已清空");
     }
 
@@ -582,7 +678,8 @@
 
     // Init
     records = loadHistory();
-    rerenderAll();
+    rerenderHistory();
+    updateLatest();
     setStatus(false, "未啟動");
   </script>
 </body>
