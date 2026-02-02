@@ -1,97 +1,462 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Android 條碼掃描</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Barcode Scanner</title>
 
-<script src="https://unpkg.com/html5-qrcode"></script>
+  <!-- html5-qrcode -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
 
-<style>
-  body { font-family: system-ui, sans-serif; padding: 16px; }
-  button { padding: 10px 14px; margin: 4px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-  th, td { border-bottom: 1px solid #ccc; padding: 6px; font-size: 14px; }
-</style>
+  <!-- Material 3 (Material Web) -->
+  <script type="module">
+    import '@material/web/button/filled-button.js';
+    import '@material/web/button/outlined-button.js';
+    import '@material/web/icon/icon.js';
+    import '@material/web/iconbutton/icon-button.js';
+    import '@material/web/snackbar/snackbar.js';
+    import '@material/web/progress/circular-progress.js';
+  </script>
+
+  <!-- Material Symbols (icons) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1" />
+
+  <style>
+    :root {
+      color-scheme: light;
+      --app-max: 720px;
+      --pad: 16px;
+      --bar-h: 86px; /* 底部操作列高度（含安全區） */
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+      background: #fff;
+      color: #111;
+    }
+
+    .wrap {
+      max-width: var(--app-max);
+      margin: 0 auto;
+      padding: 14px var(--pad);
+      padding-bottom: calc(var(--bar-h) + env(safe-area-inset-bottom, 0px));
+      box-sizing: border-box;
+    }
+
+    header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 6px 0 12px;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #666;
+    }
+
+    /* Reader (camera) */
+    .reader-card {
+      border: 1px solid #e6e6e6;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #000;
+      position: relative;
+    }
+
+    #reader {
+      width: 100%;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 12px 2px 10px;
+      color: #444;
+      font-size: 13px;
+    }
+
+    .status .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #bbb;
+    }
+    .status.running .dot { background: #1aab5b; }
+    .status.stopped .dot { background: #bbb; }
+
+    /* Records list */
+    .list {
+      margin-top: 12px;
+      border: 1px solid #eee;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .list-head {
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fafafa;
+      border-bottom: 1px solid #eee;
+    }
+
+    .list-head .title {
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .list-head .meta {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto auto; /* barcode | time | delete */
+      gap: 10px;
+      padding: 12px 14px;
+      align-items: center;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .row:last-child { border-bottom: 0; }
+
+    .barcode {
+      font-size: 14px;
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .time {
+      font-size: 12px;
+      color: #666;
+      white-space: nowrap;
+    }
+
+    .empty {
+      padding: 18px 14px;
+      color: #777;
+      font-size: 13px;
+    }
+
+    /* Bottom action bar */
+    .bottom-bar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid #eaeaea;
+      padding: 10px var(--pad);
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+      box-sizing: border-box;
+      z-index: 999;
+    }
+
+    .bottom-inner {
+      max-width: var(--app-max);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    md-filled-button, md-outlined-button {
+      width: 100%;
+      height: 44px;
+      border-radius: 999px;
+      --md-filled-button-container-shape: 999px;
+      --md-outlined-button-container-shape: 999px;
+    }
+
+    /* Small helper */
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      border: 0;
+    }
+  </style>
 </head>
 
 <body>
-<h2>📱 Android 相機條碼掃描</h2>
+  <div class="wrap">
+    <header>
+      <div>
+        <h2>條碼掃描</h2>
+        <div class="hint">提示：請用 HTTPS 開啟（GitHub Pages OK）</div>
+      </div>
+      <div class="hint" id="clock"></div>
+    </header>
 
-<div id="reader" style="width:100%"></div>
+    <div class="reader-card">
+      <div id="reader"></div>
+    </div>
 
-<button onclick="startScan()">▶ 開始掃描</button>
-<button onclick="stopScan()">⏹ 停止掃描</button>
-<button onclick="exportCSV()">⬇ 匯出 CSV</button>
+    <div id="status" class="status stopped" aria-live="polite">
+      <span class="dot" aria-hidden="true"></span>
+      <span id="statusText">未啟動掃描</span>
+      <span id="spinner" style="display:none;">
+        <md-circular-progress indeterminate></md-circular-progress>
+      </span>
+    </div>
 
-<table>
-  <thead>
-    <tr>
-      <th>Barcode</th>
-      <th>掃描時間</th>
-    </tr>
-  </thead>
-  <tbody id="log"></tbody>
-</table>
+    <section class="list" aria-label="掃描紀錄">
+      <div class="list-head">
+        <div class="title">掃描紀錄</div>
+        <div class="meta"><span id="count">0</span> 筆</div>
+      </div>
 
-<script>
-let scanner;
-let records = [];
-let lastScan = {};
-const COOLDOWN = 1500; // ms
+      <div id="records">
+        <div class="empty" id="empty">尚無資料，點底部「開始」後掃描條碼。</div>
+      </div>
+    </section>
+  </div>
 
-function now() {
-  const d = new Date();
-  return d.getFullYear() + '-' +
-    String(d.getMonth()+1).padStart(2,'0') + '-' +
-    String(d.getDate()).padStart(2,'0') + ' ' +
-    String(d.getHours()).padStart(2,'0') + ':' +
-    String(d.getMinutes()).padStart(2,'0') + ':' +
-    String(d.getSeconds()).padStart(2,'0');
-}
+  <!-- Bottom action bar -->
+  <div class="bottom-bar" role="toolbar" aria-label="操作">
+    <div class="bottom-inner">
+      <md-filled-button id="btnStart">
+        <md-icon slot="icon">
+          <span class="material-symbols-outlined">videocam</span>
+        </md-icon>
+        開始
+      </md-filled-button>
 
-function startScan() {
-  scanner = new Html5Qrcode("reader");
-  scanner.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: 250 },
-    (text) => {
-      const t = Date.now();
-      if (lastScan[text] && t - lastScan[text] < COOLDOWN) return;
-      lastScan[text] = t;
+      <md-outlined-button id="btnStop">
+        <md-icon slot="icon">
+          <span class="material-symbols-outlined">stop_circle</span>
+        </md-icon>
+        停止
+      </md-outlined-button>
 
-      const time = now();
-      records.push({ barcode: text, time });
+      <md-filled-button id="btnExport">
+        <md-icon slot="icon">
+          <span class="material-symbols-outlined">download</span>
+        </md-icon>
+        匯出 CSV
+      </md-filled-button>
+    </div>
+  </div>
 
-      const row = `<tr><td>${text}</td><td>${time}</td></tr>`;
-      document.getElementById("log").insertAdjacentHTML("afterbegin", row);
+  <md-snackbar id="snackbar"></md-snackbar>
+
+  <script>
+    // ===== Settings =====
+    const COOLDOWN = 1500; // 同碼冷卻（ms）
+
+    // ===== State =====
+    let scanner = null;
+    let isRunning = false;
+
+    /** records: [{id, barcode, time}] */
+    let records = [];
+    let lastScanAt = {}; // barcode -> epoch(ms)
+
+    // ===== UI helpers =====
+    const $ = (id) => document.getElementById(id);
+
+    function showToast(text) {
+      const sb = $("snackbar");
+      sb.labelText = text;
+      sb.open = true;
     }
-  );
-}
 
-function stopScan() {
-  if (scanner) scanner.stop();
-}
+    function nowString() {
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mi = String(d.getMinutes()).padStart(2, '0');
+      const ss = String(d.getSeconds()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+    }
 
-function exportCSV() {
-  if (records.length === 0) {
-    alert("沒有資料");
-    return;
-  }
+    function setStatus(running, text) {
+      const el = $("status");
+      const t = $("statusText");
+      const sp = $("spinner");
+      isRunning = running;
 
-  let csv = "\uFEFFbarcode,scanned_at\n";
-  records.forEach(r => {
-    csv += `"${r.barcode}","${r.time}"\n`;
-  });
+      el.classList.toggle("running", running);
+      el.classList.toggle("stopped", !running);
+      t.textContent = text;
+      sp.style.display = running ? "inline-flex" : "none";
 
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "barcode_scans.csv";
-  a.click();
-  URL.revokeObjectURL(url);
-}
-</script>
+      $("btnStart").disabled = running;
+      $("btnStop").disabled = !running;
+    }
+
+    function renderCount() {
+      $("count").textContent = String(records.length);
+      $("empty").style.display = records.length === 0 ? "block" : "none";
+    }
+
+    function renderRecordRow(item) {
+      const row = document.createElement("div");
+      row.className = "row";
+      row.dataset.id = item.id;
+
+      const barcode = document.createElement("div");
+      barcode.className = "barcode";
+      barcode.textContent = item.barcode;
+
+      const time = document.createElement("div");
+      time.className = "time";
+      time.textContent = item.time;
+
+      const del = document.createElement("md-icon-button");
+      del.setAttribute("aria-label", "刪除這筆紀錄");
+      del.innerHTML = `<md-icon><span class="material-symbols-outlined">delete</span></md-icon>`;
+      del.addEventListener("click", () => deleteRecord(item.id));
+
+      row.appendChild(barcode);
+      row.appendChild(time);
+      row.appendChild(del);
+
+      return row;
+    }
+
+    function addRecord(barcodeText) {
+      const t = Date.now();
+      if (lastScanAt[barcodeText] && (t - lastScanAt[barcodeText]) < COOLDOWN) return;
+      lastScanAt[barcodeText] = t;
+
+      const item = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(t) + Math.random().toString(16).slice(2),
+        barcode: barcodeText,
+        time: nowString()
+      };
+      records.unshift(item);
+
+      const container = $("records");
+      container.insertBefore(renderRecordRow(item), container.firstChild);
+
+      renderCount();
+    }
+
+    function deleteRecord(id) {
+      const idx = records.findIndex(r => r.id === id);
+      if (idx === -1) return;
+
+      records.splice(idx, 1);
+
+      const row = $("records").querySelector(`[data-id="${CSS.escape(id)}"]`);
+      if (row) row.remove();
+
+      renderCount();
+      showToast("已刪除 1 筆紀錄");
+    }
+
+    // ===== Scanner controls =====
+    async function startScan() {
+      if (scanner || isRunning) return;
+
+      setStatus(true, "啟動相機中…");
+
+      try {
+        scanner = new Html5Qrcode("reader");
+
+        await scanner.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            // 讓手機體驗更穩：可選擇禁用翻轉等行為（不同版本支援度不同）
+            disableFlip: true
+          },
+          (decodedText) => {
+            // 掃描成功 callback
+            const text = (decodedText || "").trim();
+            if (!text) return;
+            addRecord(text);
+          }
+        );
+
+        setStatus(true, "掃描中（對準條碼即可）");
+        showToast("相機已啟動");
+      } catch (err) {
+        console.error(err);
+        setStatus(false, "啟動失敗（請確認 HTTPS 與相機權限）");
+        showToast("啟動失敗：請確認 HTTPS / 相機權限");
+        scanner = null;
+      }
+    }
+
+    async function stopScan() {
+      if (!scanner) {
+        setStatus(false, "未啟動掃描");
+        return;
+      }
+      try {
+        await scanner.stop();
+        await scanner.clear();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        scanner = null;
+        setStatus(false, "已停止");
+        showToast("已停止掃描");
+      }
+    }
+
+    function exportCSV() {
+      if (records.length === 0) {
+        showToast("沒有資料可匯出");
+        return;
+      }
+
+      // UTF-8 BOM for Excel
+      let csv = "\uFEFFbarcode,scanned_at\n";
+      for (const r of records.slice().reverse()) {
+        // reverse: 讓 CSV 由舊到新（看你需求；想要新到舊就移除 reverse）
+        const b = String(r.barcode).replaceAll('"', '""');
+        csv += `"${b}","${r.time}"\n`;
+      }
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `barcode_scans_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      showToast("CSV 已下載");
+    }
+
+    // ===== Wire up buttons =====
+    $("btnStart").addEventListener("click", startScan);
+    $("btnStop").addEventListener("click", stopScan);
+    $("btnExport").addEventListener("click", exportCSV);
+
+    // ===== Clock (optional) =====
+    function tick() { $("clock").textContent = nowString(); }
+    tick();
+    setInterval(tick, 1000);
+
+    // Initial UI state
+    setStatus(false, "未啟動掃描");
+    renderCount();
+
+    // Stop camera if page hidden (mobile)
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) stopScan();
+    });
+  </script>
 </body>
 </html>
